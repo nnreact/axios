@@ -1,88 +1,77 @@
+import React from 'react'
+import axios from 'axios'
 import { useState, useEffect } from 'react'
-import axios from 'axios';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css'
 function App() {
-
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [posts, setPosts] = useState([]);
-
+    const [data, setData] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+    const [totalPages, setTotalPages] = useState(0);
     useEffect(() => {
-
-        async function getPosts() {
+        const fetchData = async () => {
             try {
-                setIsLoading(true);
-                const result = await axios.get("https://jsonplaceholder.typicode.com/posts");
-                console.log(result);
-                setPosts(result.data);
-            } catch (e) {
-                setError(e.message);
-            }finally{                   
-                setIsLoading(false);
+                setLoading(true);
+                const response = await axios.get(`https://dummyjson.com/products?skip=${(page - 1) * pageSize}&limit=${pageSize}`);
+                // console.log(response.data.products);
+                setData(response.data.products);
+                setTotalPages(Math.ceil(response.data.total / pageSize));
+            } catch (error) {
+                console.log(error);
+            } finally {
+                setLoading(false);
             }
-        }
+        };
+        fetchData();
+    }, [page, pageSize]);
 
-        getPosts();
+    // if (loading) {
+    //     return <div>Loading...</div>
+    // }
 
-
-        // setPosts([
-        //     {
-        //         title: "Test Title",
-        //         content: "This is a test content which is very long and is used just as an example"
-        //     },
-        //     {
-        //         title: "Test Title 2",
-        //         content: "This is a test content which is very long and is used just as an example"
-        //     },
-        //     {
-        //         title: "Test Title 3",
-        //         content: "This is a test content which is very long and is used just as an example"
-        //     },
-        //     {
-        //         title: "Test Title 4",
-        //         content: "This is a test content which is very long and is used just as an example"
-        //     },
-        //     {
-        //         title: "Test Title 5",
-        //         content: "This is a test content which is very long and is used just as an example"
-        //     },
-        // ]);
-
-    }, []);
-
-
-    if (isLoading) {
-        // return <div style={{ height: "100vh", display: "flex", justifyContent: 'center', alignItems: "center" }}>
-        //     <p>loading...</p>
-        // </div>
-
-        return <div style={{ padding: "16px" }}>
-            {
-                [1, 2, 3].map((i) => {
-                    return <div style={{ padding: "16px", border: "1px solid #ddd", marginBottom: "16px", borderRadius: "12px" }}>
-                        <Skeleton style={{ marginBottom: "16px" }} height={32} width={150} />
-                        <Skeleton style={{ marginBottom: "6px" }} count={4} height={18} width="100%" />
-                    </div>;
-                })
-            }
-        </div>
+    const handleIncrement = () => {
+        setPage(page + 1);
+        console.log(page);
     }
 
-    if (error) {
-        return <p style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", color: "tomato", fontSize: "40px" }}>{error}</p>
+    const handleDecrement = () => {
+        setPage(page - 1);
+        console.log(page);
     }
 
     return (
         <div>
             {
-                posts.map((post) => {
-                    return <div>
-                        <h1>{post.title}</h1>
-                        <p>{post.body}</p>
-                    </div>
+                loading && <div>Loading...</div>
+            }
+
+            <button disabled={page === 1} onClick={handleDecrement}>
+                Previous
+            </button>
+            <button disabled={page === totalPages} onClick={handleIncrement}>
+                Next
+            </button>
+            <select onChange={(e) => {
+                setPageSize(e.target.value);
+                setPage(1);
+            }}>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+                <option value={25}>25</option>
+            </select>
+
+            {
+                !loading && data && data.map((product) => {
+                    return (
+                        <div key={product.id}>
+                            <h1>{product.id}</h1>
+                            <h1>{product.title}</h1>
+                        </div>
+                    )
                 })
             }
+
         </div>
     )
 }
